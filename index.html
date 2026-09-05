@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0b0f14"/>
+<title>CFB Lineup Lab · Sat Early 9/5</title>
+<style>
+:root{
+  --bg:#0b0f14; --bg2:#10161d; --card:#161d26; --card2:#1c2530;
+  --line:#2a3440; --text:#e8eef4; --muted:#8b98a5; --dim:#5c6a78;
+  --gold:#f5c542; --green:#3dd68c; --red:#ff5c7a; --blue:#5aa7ff;
+  --pur:#b39bff; --orange:#ff9d4a;
+  --safe-b: env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+.app{max-width:980px;margin:0 auto;padding:0 10px 180px}
+header.top{position:sticky;top:0;z-index:40;background:linear-gradient(#0b0f14 70%,rgba(11,15,20,.92));
+  padding:10px 2px 8px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:16px;margin:0;letter-spacing:.02em}
+h1 span{color:var(--gold)}
+.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.modes{display:flex;gap:6px}
+.modes button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;min-height:40px}
+.modes button.on.cash{background:#123322;border-color:#2f7a55;color:var(--green)}
+.modes button.on.gpp{background:#2a2150;border-color:#6d5bb3;color:var(--pur)}
+.meter{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.meter-row{display:flex;justify-content:space-between;font-size:12px;gap:8px;flex-wrap:wrap}
+.meter-row b{font-variant-numeric:tabular-nums}
+.bar{height:7px;background:#22303c;border-radius:99px;margin-top:6px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--green);border-radius:99px}
+.bar.over>i{background:var(--red)}
+.lineup{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(min-width:720px){.lineup{grid-template-columns:repeat(4,1fr)}}
+.slot{background:var(--card);border:1px dashed #33404c;border-radius:10px;padding:7px 8px;min-height:58px;cursor:pointer}
+.slot.filled{border-style:solid;border-color:#3a4a58;background:var(--card2)}
+.slot .k{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.06em}
+.slot .n{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .m{font-size:11px;color:var(--muted)}
+.slot.empty .n{color:var(--dim);font-weight:500}
+.actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.actions button{flex:1;min-width:30%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card2)}
+.actions button.primary{background:var(--gold);color:#1a1404;border-color:var(--gold);font-weight:700}
+.actions button.ghost{color:var(--muted)}
+.filters{margin:10px 0 6px;display:flex;gap:6px;overflow:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 11px;min-height:38px;font-size:13px}
+.chip.on{background:#2a2410;border-color:var(--gold);color:var(--gold)}
+.search{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;min-height:44px;outline:none}
+.sortrow{display:flex;align-items:center;justify-content:space-between;margin:8px 0;font-size:12px;color:var(--muted)}
+.sortrow select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.plist{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 10px;min-height:56px;cursor:pointer}
+.prow.in{border-color:#2f7a55;background:#10261b}
+.prow.thin{opacity:.78}
+.who .nm{font-weight:650}
+.who .meta{font-size:11px;color:var(--muted)}
+.stat{text-align:right;font-variant-numeric:tabular-nums}
+.stat .v{font-weight:700}
+.stat .l{font-size:10px;color:var(--muted)}
+.sal{text-align:right;min-width:62px}
+.sal .v{font-weight:700;color:var(--gold)}
+.badge{display:inline-block;font-size:10px;border:1px solid var(--line);border-radius:999px;padding:1px 6px;color:var(--muted);margin-left:4px}
+.badge.prop{color:var(--green);border-color:#2f7a55}
+.badge.thin{color:var(--orange);border-color:#8a5a20}
+.toast{position:fixed;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%);background:#22303c;border:1px solid var(--line);padding:10px 14px;border-radius:12px;z-index:80;display:none}
+.note{font-size:11px;color:var(--dim);margin:14px 2px 40px;line-height:1.45}
+.legal{font-size:12px;margin-top:6px}
+.legal.ok{color:var(--green)}
+.legal.bad{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div>
+        <h1>CFB <span>Lineup Lab</span></h1>
+        <div class="sub">Sat Classic early · noon ET + BALL@OSU 12:30 · $50k · research only</div>
+      </div>
+      <div class="modes">
+        <button id="btnCash" class="cash on" onclick="setMode('cash')">Cash</button>
+        <button id="btnGpp" class="gpp" onclick="setMode('gpp')">GPP</button>
+      </div>
+    </div>
+    <div class="meter">
+      <div class="meter-row">
+        <div>Used <b id="used">$0</b></div>
+        <div>Left <b id="left">$50,000</b></div>
+        <div>Exp <b id="expSum">—</b></div>
+        <div>Pts/$1k <b id="luVal">—</b></div>
+      </div>
+      <div class="bar" id="bar"><i id="barFill"></i></div>
+      <div class="legal" id="legal">0/8 · build a legal 8</div>
+    </div>
+    <div class="lineup" id="lineup"></div>
+    <div class="actions">
+      <button class="primary" onclick="copyCard()">Copy 8</button>
+      <button onclick="loadStub()">Load cash stub</button>
+      <button class="ghost" onclick="clearLu()">Clear</button>
+    </div>
+  </header>
+
+  <input class="search" id="q" placeholder="Search player, team, game" oninput="renderList()"/>
+  <div class="filters" id="filters"></div>
+  <div class="sortrow">
+    <span id="count"></span>
+    <label>Sort
+      <select id="sort" onchange="renderList()">
+        <option value="per1k">Pts / $1k</option>
+        <option value="exp">Expected DK</option>
+        <option value="sal">Salary</option>
+        <option value="name">Name</option>
+      </select>
+    </label>
+  </div>
+  <div class="plist" id="list"></div>
+  <p class="note">
+    Expected DK is implied from posted prop lines only (Underdog full early board; plus bet365 Cam Cook rush 115.5; Covers Sayin pass 289.5; Action Network Smith rec 87.5; Covers Bo Jackson rush 83.5).
+    Players with no volume props show a dash — not a guess. Thin = TD-only market, no yardage/receptions line.
+    Scoring: pass yds/25 (+3 if ≥300), 4×pass TD, rush yds/10 (+3 only if rush line ≥100), receptions, rec yds/10 (+3 if ≥100), 6×anytime TD, −INT.
+    Never place bets or enter contests from this page. Paste the card into DraftKings on your US remote.
+    Snapshot Sat Sep 5, 2026 morning. Slate: ECU@BAMA · CCU@WVU · ORST@HOU · OHIO@NEB · UNT@IND · BALL@OSU.
+  </p>
+</div>
+<div class="toast" id="toast"></div>
+<script src="players.js"></script>
+<script>
+const CAP=50000;
+const SLOTS=["QB","RB","RB","WR","WR","WR","FLEX","S-FLEX"];
+const PLAYERS=window.PLAYERS;
+const STUB=["Julian Sayin","Cam Cook","Lee Beebe Jr.","Jeremiah Smith","DJ Epps","Kwazi Gilmer","Karmello English","Michael Hawkins Jr."];
+const LS="cfbLab.satEarly.20260905.v1";
+
+const byId=Object.fromEntries((PLAYERS||[]).map(p=>[p.id,p]));
+const state={
+  mode:"cash",
+  cash:Array(8).fill(null),
+  gpp:Array(8).fill(null),
+  pos:"ALL",
+  game:"ALL",
+  onlyExp:false,
+  cheap:false
+};
+
+function lu(){return state[state.mode]}
+function setLu(arr){state[state.mode]=arr}
+
+function load(){
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    if(s.cash) state.cash=s.cash;
+    if(s.gpp) state.gpp=s.gpp;
+    if(s.mode) state.mode=s.mode;
+  }catch(e){}
+}
+function save(){
+  localStorage.setItem(LS, JSON.stringify({mode:state.mode,cash:state.cash,gpp:state.gpp}));
+}
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.style.display="block";
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display="none",1600);
+}
+
+function canSlot(slot,p){
+  if(slot==="QB") return p.pos==="QB";
+  if(slot==="RB") return p.pos==="RB";
+  if(slot==="WR") return p.pos==="WR";
+  if(slot==="FLEX") return p.pos==="RB"||p.pos==="WR";
+  if(slot==="S-FLEX") return p.pos==="QB"||p.pos==="RB"||p.pos==="WR";
+  return false;
+}
+
+function inLu(id){return lu().indexOf(id)}
+
+function bestSlot(p){
+  const cur=lu();
+  for(let i=0;i<8;i++){
+    if(cur[i]==null && SLOTS[i]===p.pos) return i;
+  }
+  for(let i=0;i<8;i++){
+    if(cur[i]==null && canSlot(SLOTS[i],p)) return i;
+  }
+  return -1;
+}
+
+function togglePlayer(id){
+  const idx=inLu(id);
+  const next=lu().slice();
+  if(idx>=0){ next[idx]=null; setLu(next); save(); paint(); return; }
+  const p=byId[id];
+  const s=bestSlot(p);
+  if(s<0){ toast("No open slot for "+p.pos+". Remove someone first."); return; }
+  next[s]=id; setLu(next); save(); paint();
+}
+
+function clearSlot(i){
+  const next=lu().slice(); next[i]=null; setLu(next); save(); paint();
+}
+
+function setMode(m){
+  state.mode=m; save(); paint();
+}
+
+function clearLu(){
+  setLu(Array(8).fill(null)); save(); paint(); toast(state.mode.toUpperCase()+" cleared");
+}
+
+function loadStub(){
+  const next=Array(8).fill(null);
+  STUB.forEach((name,i)=>{
+    const p=PLAYERS.find(x=>x.name===name);
+    if(p) next[i]=p.id;
+  });
+  state.mode="cash";
+  state.cash=next;
+  save(); paint(); toast("Cash stub loaded · $50,000");
+}
+
+function money(n){return "$"+n.toLocaleString()}
+
+function copyCard(){
+  const cur=lu();
+  const rows=cur.map((id,i)=>{
+    const p=id?byId[id]:null;
+    const lab=SLOTS[i];
+    return lab+" "+(p?p.name:"—");
+  });
+  const names=cur.map(id=>id?byId[id].name:"").filter(Boolean);
+  const used=cur.reduce((s,id)=>s+(id?byId[id].sal:0),0);
+  const exp=cur.reduce((s,id)=>s+(id&&byId[id].exp!=null?byId[id].exp:0),0);
+  const txt=[
+    (state.mode==="cash"?"CASH":"GPP")+" · Sat Early 9/5 · "+money(used)+" / $50,000",
+    ...rows,
+    "Expected DK "+(exp?exp.toFixed(2):"—"),
+    "",
+    names.join("\n")
+  ].join("\n");
+  navigator.clipboard.writeText(txt).then(()=>toast("Copied — paste on your US remote DK")).catch(()=>{
+    prompt("Copy this:", txt);
+  });
+}
+
+function totals(){
+  const cur=lu();
+  const used=cur.reduce((s,id)=>s+(id?byId[id].sal:0),0);
+  const filled=cur.filter(Boolean).length;
+  const expParts=cur.map(id=>id?byId[id].exp:null);
+  const has=expParts.filter(v=>v!=null);
+  const exp=has.reduce((s,v)=>s+v,0);
+  const over=used>CAP;
+  const legal=filled===8 && !over;
+  return {used,filled,exp,has:has.length,over,legal,left:CAP-used};
+}
+
+function paintHeader(){
+  document.getElementById("btnCash").classList.toggle("on", state.mode==="cash");
+  document.getElementById("btnGpp").classList.toggle("on", state.mode==="gpp");
+  const t=totals();
+  document.getElementById("used").textContent=money(t.used);
+  document.getElementById("left").textContent=money(t.left);
+  document.getElementById("left").style.color=t.over? "var(--red)":"var(--green)";
+  document.getElementById("expSum").textContent=t.has? t.exp.toFixed(1):"—";
+  document.getElementById("luVal").textContent=t.used? (t.exp/(t.used/1000)).toFixed(2):"—";
+  const pct=Math.min(100, t.used/CAP*100);
+  document.getElementById("barFill").style.width=pct+"%";
+  document.getElementById("bar").classList.toggle("over", t.over);
+  const el=document.getElementById("legal");
+  if(t.legal){ el.className="legal ok"; el.textContent="Legal 8 · "+money(t.used)+" · Exp "+t.exp.toFixed(1); }
+  else { el.className="legal bad"; el.textContent=t.filled+"/8 · "+(t.over?"OVER CAP":"need "+(8-t.filled)+" more"); }
+}
+
+function paintLineup(){
+  const cur=lu();
+  document.getElementById("lineup").innerHTML=cur.map((id,i)=>{
+    const p=id?byId[id]:null;
+    if(!p) return `<div class="slot empty" onclick="toast('Tap a player to fill ${SLOTS[i]}')"><div class="k">${SLOTS[i]}</div><div class="n">empty</div></div>`;
+    const exp=p.exp==null?"—":p.exp.toFixed(1);
+    return `<div class="slot filled" onclick="clearSlot(${i})"><div class="k">${SLOTS[i]} · tap to drop</div><div class="n">${p.name}</div><div class="m">${p.team} · ${money(p.sal)} · exp ${exp}</div></div>`;
+  }).join("");
+}
+
+const GAMES=["ECU @ BAMA","CCU @ WVU","ORST @ HOU","OHIO @ NEB","UNT @ IND","BALL @ OSU"];
+function paintFilters(){
+  const chips=[
+    ["ALL","ALL"],["QB","QB"],["RB","RB"],["WR","WR"],["EXP","has-exp"],["CHEAP","≤$4.5k"]
+  ].map(([k,lab])=>{
+    const on=(k==="ALL"&&state.pos==="ALL"&&!state.onlyExp&&!state.cheap)
+      || (k==="QB"&&state.pos==="QB")
+      || (k==="RB"&&state.pos==="RB")
+      || (k==="WR"&&state.pos==="WR")
+      || (k==="EXP"&&state.onlyExp)
+      || (k==="CHEAP"&&state.cheap);
+    return `<button class="chip ${on?"on":""}" onclick="setFilter('${k}')">${lab}</button>`;
+  }).join("") + GAMES.map(g=>`<button class="chip ${state.game===g?"on":""}" onclick="setGame('${g}')">${g}</button>`).join("");
+  document.getElementById("filters").innerHTML=chips;
+}
+function setFilter(k){
+  if(k==="ALL"){state.pos="ALL";state.onlyExp=false;state.cheap=false;state.game="ALL";}
+  else if(k==="EXP"){state.onlyExp=!state.onlyExp;}
+  else if(k==="CHEAP"){state.cheap=!state.cheap;}
+  else {state.pos=k;}
+  renderList(); paintFilters();
+}
+function setGame(g){ state.game = state.game===g?"ALL":g; renderList(); paintFilters(); }
+
+function renderList(){
+  if(!PLAYERS){ document.getElementById("list").textContent="players.js failed to load"; return; }
+  const q=(document.getElementById("q").value||"").toLowerCase().trim();
+  const sort=document.getElementById("sort").value;
+  let rows=PLAYERS.filter(p=>{
+    if(state.pos!=="ALL" && p.pos!==state.pos) return false;
+    if(state.game!=="ALL" && p.game!==state.game) return false;
+    if(state.onlyExp && p.exp==null) return false;
+    if(state.cheap && p.sal>4500) return false;
+    if(q){
+      const hay=(p.name+" "+p.team+" "+p.opp+" "+p.game+" "+p.pos).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  rows.sort((a,b)=>{
+    if(sort==="per1k"){
+      const av=a.per1k==null?-1:a.per1k, bv=b.per1k==null?-1:b.per1k;
+      return bv-av || b.sal-a.sal;
+    }
+    if(sort==="exp"){
+      const av=a.exp==null?-1:a.exp, bv=b.exp==null?-1:b.exp;
+      return bv-av;
+    }
+    if(sort==="sal") return b.sal-a.sal;
+    return a.name.localeCompare(b.name);
+  });
+  document.getElementById("count").textContent=rows.length+" players";
+  const on=new Set(lu().filter(Boolean));
+  document.getElementById("list").innerHTML=rows.map(p=>{
+    const exp=p.exp==null?"—":p.exp.toFixed(2);
+    const pk=p.per1k==null?"—":p.per1k.toFixed(2);
+    const badges=(p.nBooks?`<span class="badge prop">${p.nBooks} book${p.nBooks>1?"s":""}</span>`:"")
+      +(p.thin?`<span class="badge thin">thin</span>`:"");
+    return `<div class="prow ${on.has(p.id)?"in":""} ${p.thin?"thin":""}" onclick="togglePlayer(${p.id})">
+      <div class="who"><div class="nm">${p.name}${badges}</div>
+      <div class="meta">${p.pos} · ${p.team} vs ${p.opp} · ${p.game}${p.mkts&&p.mkts.length?" · "+p.mkts.join(", "):""}</div></div>
+      <div class="stat"><div class="v">${exp}</div><div class="l">exp · ${pk}/$1k</div></div>
+      <div class="sal"><div class="v">${money(p.sal)}</div><div class="l">${on.has(p.id)?"in lineup":"tap"}</div></div>
+    </div>`;
+  }).join("");
+}
+
+function paint(){
+  paintHeader(); paintLineup(); paintFilters(); renderList();
+}
+load(); paint();
+</script>
+</body>
+</html>
